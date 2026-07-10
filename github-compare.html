@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Commit Compare</title>
+</head>
+<body>
+  <p>This minimal page builds a GitHub compare URL from two commit URLs and navigates there.</p>
+
+  <label for="earlier">Earlier</label><br>
+  <input id="earlier" type="text" placeholder="https://github.com/owner/repo/commit/sha" size="80"><br><br>
+
+  <label for="later">Later</label><br>
+  <input id="later" type="text" placeholder="https://github.com/owner/repo/commit/sha" size="80"><br><br>
+
+  <button id="compare">Compare</button>
+
+  <div id="error" role="status" style="color: red; margin-top: 1em;"></div>
+
+  <script>
+    // Parse GitHub commit URL: https://github.com/{owner}/{repo}/commit/{sha}
+    function parseCommitUrl(url) {
+      if (!url) return null;
+      url = url.trim();
+      var re = /^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/commit\/([0-9a-fA-F]{7,40})(?:[\/?#].*)?$/;
+      var m = url.match(re);
+      if (!m) return null;
+      return { owner: m[1], repo: m[2], sha: m[3] };
+    }
+
+    function showError(msg) {
+      document.getElementById('error').textContent = msg;
+    }
+
+    document.getElementById('compare').addEventListener('click', function () {
+      showError('');
+      var earlierVal = document.getElementById('earlier').value;
+      var laterVal = document.getElementById('later').value;
+
+      var e = parseCommitUrl(earlierVal);
+      var l = parseCommitUrl(laterVal);
+
+      if (!e) { showError('Earlier URL is not a valid GitHub commit URL.'); return; }
+      if (!l) { showError('Later URL is not a valid GitHub commit URL.'); return; }
+
+      if (e.owner !== l.owner || e.repo !== l.repo) {
+        showError('Both commits must be from the same GitHub repository (owner/repo).');
+        return;
+      }
+
+      if (e.sha === l.sha) {
+        showError('Both commits are the same SHA; nothing to compare.');
+        return;
+      }
+
+      var compareUrl = 'https://github.com/' + encodeURIComponent(e.owner) + '/' + encodeURIComponent(e.repo) + '/compare/' + encodeURIComponent(e.sha) + '...' + encodeURIComponent(l.sha);
+
+      // Navigate to the constructed compare URL
+      window.location.href = compareUrl;
+    });
+  </script>
+</body>
+</html>
